@@ -1,0 +1,1093 @@
+\documentclass[a4paper,11pt]{memoir}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{25CF}{$\bullet$}
+\DeclareUnicodeCharacter{251C}{\mbox{\kern.23em
+  \vrule height2.2exdepth1exwidth.4pt\vrule height2.2ptdepth-1.8ptwidth.23em}}
+\DeclareUnicodeCharacter{2500}{\mbox{\vrule height2.2ptdepth-1.8ptwidth.5em}}
+
+\usepackage{minted}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{float}
+\restylefloat{table}
+\restylefloat{figure}
+\usepackage{placeins}
+\usepackage{amsmath}
+
+\usepackage{blindtext}
+\usepackage{tabularx}
+
+\input{smart-thesis/style}
+\input{smart-thesis/common-packages}
+\input{smart-thesis/common-macros}
+
+\thesistype{Project documentation}
+\discipline{}
+\title{DeTeCt, v3.1}
+\author{Jon Juaristi Campillo,Marc Delcroix,Ricardo Hueso}
+\institution{Planetary Sciences Group,UPV/EHU}
+\supervisors{Ricardo Hueso}
+
+\begin{document}
+
+\frontmatter
+
+\smarttitle
+
+\smartcopyright{Note: DeTeCt3.1 has been developed from DeTeCt2.0 (originally written by M. Delcroix and partially based on algorithms developed by L. Calderon and R. Hueso at UPV/EHU). This version of the software was developed by Jon Juaristi and Marc Delcroix as part of the Planetary Space Weather Services (PSWS) on Europlanet-2020 RI. Europlanet 2020 RI has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreement No 654208. The software is released as open software and can be modified by third parties.}
+
+\smartinitialepigraph{Science is what we understand well enough to explain to a computer. Art is everything else we do.}{Donald E. Knuth}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\newpage
+
+\listoftables
+
+\newpage
+
+\listoffigures
+
+\mainmatter
+
+\chapter{Introduction}
+
+This is the documentation for the current 3.1 version of the DeTeCt software. This is the next big version in the 3.0 branch, started in late 2016 -- early 2017 but discontinued due to participants not being able to further develop that branch.
+
+This version tackles the problems and issues from the previous version, unstable and experimental, which didn’t yield the results the stable 2.0 branch, did.
+
+This document will serve as both the documentation and a guide for future developers and users to improve the software by the classic method of trial and error.
+
+\section{Changelog}
+
+\textbf{2018-01-12}: Document creation, brief introduction.
+
+\textbf{2018-02-06}: Initial file, similar to v3.0 documentation
+
+\textbf{2018-02-19}: More information now that the software is to be released
+
+\textbf{2018-02-21}: Simple explanation of most files done; needs corrections by Marc Delcroix to be thorough.
+
+\textbf{2018-06-13}: First \LaTeX{} version. Some corrections.
+
+\chapter{Installation}
+
+\section{Requirements}
+\begin{enumerate}
+\item Windows XP or later
+\item  OpenCV (2.4.13 is used and distributed with the software)
+\item  Visual Studio versions compatible with vc12/2013 (required for OpenCV 2.x). If OpenCV 3.x is used, later versions of Visual Studio are recommended (2015 and 2017 at the time of the writing of this document).
+\begin{enumerate}
+\item Community Edition: 30 day trial with a full unlock by using a Microsoft Account
+\item Atomineer Pro (optional): addon which has been used to create the
+documentation. Other alternatives include Doxygen.
+\end{enumerate}
+\end{enumerate}
+
+\section{Initial setup}
+\begin{enumerate}
+\item Download OpenCV from the official site (http://opencv.org). The downloadable file is an executable which can be extracted. When extracted, a folder called “opencv” is created in the same directory.
+\item The folder created in the previous step should be moved to C:\ (So the full path would be C:\textbackslash{}opencv2) as this is the current configuration. This can be configured later depending on the developer’s needs.
+\item In cases where ffmpeg is not available (necessary to read some of the videos) it should be installed in C, too. Bear in mind that both x86 and x64 versions should be downloaded to ensure compilation for both architectures. The Dev version located here (https://ffmpeg.zeranoe.com/builds/), and moved to C:
+\item Install Visual Studio Community edition, which is the tool used for development. The existing codebase was developed with the 2013 version (supported by OpenCV 2) so a version compatible with that one is recommended. Luckily, as 2013 is not available for free, the 2015 and 2017 Community Editions have backwards compatibility. Furthermore, to ensure all tools for GUI development are available out of the box two items need to be checked in the installation:
+\begin{enumerate}
+\item Visual C++
+\item Microsoft Foundation Classes (MFC) for C++
+\end{enumerate}
+\end{enumerate}
+
+
+\section{Start the project}
+
+The easiest way to launch the project is opening the .sln solution file. An instance of Visual Studio will be launched. There, click the build button. In case it doesn’t work open Tools > Options. There, go to Debugging > Symbols and in the Symbol file (.pdb) locations, check “Microsoft Symbol Server”. After you have closed the software, in the second run the central panel should show a section called “Recent Project” where DeTeCt-MFC should be the only item on the list. Click it to open the project again.
+
+\section{First run}
+You’ll see that in the main control bars, there are different controls and two specifically where the words “Release” and “x86” are present. These controls refer to the configuration of the program compilation, the former being the mode (debug being for development and release being for production), the latter being the version (x86 for 32-bit architecture and x64 for 64-bit architecture).
+
+Click in the play button where “Build” appears and if everything goes right the compilation should be done correctly and the main windows should appear. Check the next chapter for more details.
+
+
+\chapter{Internals}
+
+\section{Major differences from previous versions}
+
+Detect v3.1 is the improvement of the previous faulty v3.0 version which is in turn the evolution of the v2.0 branch; main changes being:
+
+\begin{enumerate}
+\item. Written mostly in C++, instead of being fully implemented in C as previous versions were.
+\item Uses (for the most part) the C++ OpenCV API rather than the C API.
+\item Graphical application instead of a console application, with an easier (almost non-existent) learning curve.
+\end{enumerate}
+
+Some old code has been reused due to time constraints and respecting the KISS and DRY principles in order to not rewrite the whole application in C++ for the same reason. C++ compilers such as the one used in this project are able to interoperate with C code with external linkage.
+
+
+\section{Interface: MFC}
+The GUI framework used in DeTeCt is MFC, short for Microsoft Foundation Classes. MFC allows to create native Windows applications. Although a bit outdated, it supports major Windows versions starting from XP.
+
+Currently, the GUI consists of four windows:
+
+\subsection{Main window}
+The main window, which in itself consists of a simple interface that for the time being isn’t scalable. It can be divided into three parts.
+
+\subsubsection{Part 1: Top (menu bar)}
+Three menus can be seen here:
+\begin{enumerate}
+\item The “File” item opens another menu which allows three controls:
+\begin{enumerate}
+\item Open file: opens a window which allows the user to select a single file out of the allowed ones.
+\item Open folder: opens a window which allows the user to select a folder which
+will be recursively traversed for allowed files. Depending on the depth of the
+directory tree the file list can be bigger than expected.
+\item Exit: exits the program
+\end{enumerate}
+\item The “Preferences” item opens another menu which allows a control:
+\begin{enumerate}
+\item Advanced settings: opens a settings window, which will be detailed in later
+sections.
+\end{enumerate}
+\item The “help” item opens a menu which allows a control:
+\begin{enumerate}
+\item About: opens the about window, with information about the software and
+authors.
+\end{enumerate}
+\end{enumerate}
+
+\subsubsection{Part 2: Middle (log)}
+The big white rectangle covering most of the window is the part where the events will be logged. It’s scrollable so the user can read the events even when the algorithm is running (since it’s threaded).
+
+\subsubsection{Part 3: Down (progress bar and button)}
+
+As can be seen, the progress bar is just below the log. This bar will update for each frame analysed, the step being calculated by MFC itself by setting the  interval between 1 and the number of frames of the video to be analysed.
+
+The button below just launches the algorithm (which will be detailed in another section) for each item in the list of files).
+
+\subsection{Preferences window}
+This window shows the settings the current algorithm uses, with the default values. Most of the parameters are carried from the older version. Some of them have been discarded (but maintained for legacy reasons) and others have been added. They are divided as such:
+
+\subsubsection{Impact parameters}
+Parameters regarding the actual impact: the mean value factor, minimum time in seconds (which will be translated into frames taking the fps into account), the radius in pixels and the brightness threshold.
+
+There are other parameters regarding the mask, etcetera.
+
+\subsubsection{ROI parameters}
+Parameters regarding the region of interest which will ideally contain Jupiter. The size and security factor (so it isn’t big/small) and the median buffer size to compute it. The main difference with previous versions is that the ROI is only computed in the first frame and then detected by correlation in subsequent frames.
+
+\subsubsection{Visualisation parameters}
+
+Parameters regarding the visualisation of the algorithm in different forms:
+\begin{enumerate}
+\item ROI shows a cropped image of the frame limited by the ROI coordinates
+\item Tracking shows the original frame with the ROI and Centre of Mass (or Centre of Brightness)
+\item Difference shows the difference frame
+\item Reference shows the reference frame
+\item Mask shows the mask used to compute the difference frame
+\item Threshold shows the thresholded difference frame
+\item Smooth shows an smoothed difference frame
+\item Histogram shows the histogram of the image
+\item Result shows the result of the algorithm (same as difference image)
+\end{enumerate}
+
+\subsubsection{Other parameters}
+Parameters that can’t be categorised, so to speak. The most important ones are the number of frames for the reference, which will become a running average one we construct it; the minimum number of frames for the video; the debayering code for videos which use a median filter and the filter to smooth the difference image.
+
+\subsection{About window}
+This window is straightforward and doesn’t have any input controls. General information about the software is given: version, authors and a small disclaimer of Europlanet funds as per the requirement of the project.
+
+There are also two links: one to the original project page run by Mark Delcroix and the other one the UPV/EHU software page run by Ricardo Hueso.
+
+\subsection{Notification window}
+This window is also straightforward and will appear once the algorithm has run. It’s shown as a modal so the user has to close it by hand.
+
+\section{The new impact detection algorithm}
+
+\subsection{Definition}
+The algorithm is a variation of the original with a few modifications and additions by the UPV/EHU team (Jon Juaristi and Ricardo Hueso). The list below explains how an execution goes for a video:
+\begin{enumerate}
+\item Read video file. SER videos are automatically converted into the original colours, ultimately BGR or RGB.
+\item For the video, get the framerate in frames/s and the number of frames.
+Some videos in wmv format might produce negative or wrong framerates.
+\item  If $n <= min_{frames}$ ignore the file
+\item  Else:
+\begin{enumerate}
+\item Read frame
+\item  Convert frame to grayscale, taking into account the colour of the original video (RGB, RBG, Bayer filters). For SER files the Bayer conversion is done
+automatically, manually (an option in the interface) for the rest.
+\item If $n_{frame} = 1$
+\begin{enumerate}
+\item Get the CM (centre of mass, but actually the centre of brightness of
+the image) and the ROI.
+\item Smooth the frame with a filter stipulated by the user
+\item Convert the frame to the reference frame
+\item Add frame to reference frame queue (size is an option inputted by the user, 50 by default).
+\end{enumerate}
+\item If $n_{frame} > 1$
+\begin{enumerate}
+\item We apply a cross correlation algorithm (as the frames could be
+unaligned) with the original ROI and a provisional ROI slightly bigger
+than the original; thus obtaining a new ROI with the original
+dimensions.
+\item Normalise the frame with
+\[Grey_n = Grey_n \cdot \dfrac{\overline{Grey_1}}{\overline{Grey_n}}\]
+\item Create the difference frame by applying differential photometry:
+\[Dif_n = Grey_n - Ref_{n-1}\]
+\item Apply thresholding to possible negative values.
+\item Smooth with a filter selected by the user (standard, median,
+Gaussian or none).
+\item Save the maximum brightness point in with the frame number
+(minus the faulty frames), x and y coordinates and the value.
+\item Add this to a list of maximum brightness-es of differential photometry
+frames of the video.
+\item Check the size of the reference frame queue in regards to the number
+of frames needed for the reference frame
+\begin{enumerate}
+\item If its lower, update the new reference frame:
+\[ Ref_n = \dfrac{n-1}{n} \cdot Ref_{n-1} + \dfrac{1}{n} \cdot Grey_n \]
+\item If it isn’t, pop the first item and update the new reference frame, being the popped item:
+\[ Ref_n = Ref_{n-1} + \dfrac{Grey_n}{N} - \dfrac{Q_0}{n} \]
+\end{enumerate}
+\item Add grayscale frame to the reference frame queue.
+\end{enumerate}
+\item Show the desired output frames: difference, ROI, tracking, etc.
+\item Once the file has been fully examined we create the detection images:
+\begin{enumerate}
+\item Mean frame: each pixel is the mean brightness value of the coregistered frames.
+\item  Max-mean frame (original and brightness-scaled): each pixel is the difference between the maximum brightness and mean brightness for
+each position in the coregistered sequence of frames.
+\item If the detail option has been selected other result frames will be
+created.
+\end{enumerate}
+\end{enumerate}
+\item 5. After the video has been analysed, the impact algorithm is run:
+\begin{enumerate}
+\item Check that $B_{max} > \overline{B} \cdot meanValueFactor$
+\item  Create an empty queue whose size will between 5 and
+\item  For each item on the list;
+\begin{enumerate}
+\item When the queue is full (equal to or bigger than the size)
+\begin{enumerate}
+\item Get the mean brightness value
+\item If $\overline{Q_B} < \overline{B} \cdot (1 + meanValueFactor)$, remove the first item and add item to queue and skip to the next step of the loop
+\item Else, get the brightest element (first item when sorting by brightness), which will be assumed as the point of impact.
+\item Check the number of frames in a radius close to the brightest item:
+\[ r = (x - x_0)^2 + (y - y_0)^2 \]
+\item If more than 70 \% of the frames are in the radius of the impact, it is considered as an impact candidate.
+\item Reorder the list in the original form (ascending order of frame
+number).
+\item If the mean is bigger than the previous mean (meaning it’s the brightest impact), and impact detection object is created, with the first, last and maximum brightness frames; another item being added to detect if it could be a longer impact.
+\item If the mean is lower, the first item is removed and an item is
+added to the back of the queue, skipping to the next loop.
+\end{enumerate}
+\item When the queue isn’t full, the item is pushed to the back of the queue
+\end{enumerate}
+\item If we have an impact, we check if the length is really the stipulated one, just in case; then show its duration (in the debug console, for the time being).
+\end{enumerate}
+\item The interface will show if an impact has been detected or not: in a positive case, the information (start, finish, maximum brightness frames) will be shown, whereas in a negative case the user will be promptly notified about the lack of impact.
+\item Either way, the detection image will be shown for some seconds (four for the time being).
+\item If the image being processed was the last one of the bunch, a window will be shown where the user is notified of the location of the log which should be sent to Marc Delcroix.
+\end{enumerate}
+
+\subsection{Results}
+The results depend on the used parameters. As of now, the default parameters are used, with a mean value factor of 0,4.
+
+A small functionality which creates .csv files has been added. This file contains one line per frame with its number, and the information about the maximum of brightness (x and y coordinates, the value of brightness). The files are used to test the algorithm and check if the parameters are the correct ones.
+
+Comparing it to the log files, there are a couple f videos where the impact is really evident.
+
+Those are the videos where there isn’t much noise / clouds and the impact is clear; whereas there are others where the impacts are not detected:
+\begin{itemize}
+\item Impact is discernible and detected: Wesley, Go, Aoki, Ichimaru, McKeon, Kernbauer, Thomas, Pedranghelu
+\item Impact is neither discernible nor detected: Fleckstein
+\item Impact detection is a bit faulty: Masayuki
+\end{itemize}
+
+We’ve added a small part to the log which shows the certainty of the impact.
+
+First we get a brightness factor BF operating with the maximum brightness values (B) of the differential images used for the impact detection
+
+\[ BF = \dfrac{B_{max}}{\overline{B}} - 1 \]
+
+Then we obtain the certainty with this formula:
+
+\[ Certainty = \dfrac{BF}{MIS} \cdot \log_{10}\left(\dfrac{N_{real}}{N_{minimum}} \cdot 10\right) \]
+
+Where MIS is the minimum impact strength explained before, B is the mean of brightness and N is the number of frames of the impact, real being the actual impact and minimum being the parameter established in the option window.
+
+The number will depend in two factors: the brightness factor and the length of the impact itself.
+
+\section{New functionalities and how to edit them}
+
+\subsection{GUI}
+
+The main file (called a \textit{resource file} in MFC context) is named \texttt{DeTeCt-MFC.rc}. An area called \textit{“Resource view”} will be seen in the right side of the window when the project is opened.
+
+A list of items will be shown with a non-trivial name; which is in turn the ID of the control.
+
+Double clicking in one of the items will open an interface editing view. These are the most important ones:
+\begin{enumerate}
+\item Dialog
+\begin{enumerate}
+\item \texttt{IDD\_ABOUTBOX}: ID for the about dialog/window
+\item \texttt{IDD\_DETECTMFCDIALOG}: ID for the about dialog/window
+\item \texttt{IDD\_PREFERENCES}: ID for the settings dialog/window
+\item \texttt{IDD\_SENDLOGDIALOG}: ID for the result dialog/window
+\end{enumerate}
+\item Menu
+\begin{enumerate}
+\item \texttt{IDR\_MENU1}: ID for the main menu bat
+\end{enumerate}
+\end{enumerate}
+
+All dialogs have their own classes which have been defined in \texttt{DeTeCt-MFC.h} and \texttt{DeTeCt-MFC.cpp} header and source file respectively.
+
+The correspondence between the Ids and the classes is the next one:
+
+\begin{enumerate}
+\item \texttt{IDD\_ABOUTBOX}: \texttt{CAboutDlg}
+\item \texttt{IDD\_DETECTMFC\_DIALOG}: \texttt{CDeTeCtMFCDlg}
+\item \texttt{IDD\_PREFERENCES}: \texttt{PrefDlg}
+\item \texttt{IDD\_SENDLOGDIALOG}: \texttt{SendEmailDlg}
+\end{enumerate}
+
+To add items to the code, after right-clicking the \textit{“Add member”} variable item of the menu has to be used. It will be added to the respective class, being declared in the header file. Double clicking will create events for the item in question.
+
+In both cases a dialog will be opened, which is easy to navigate, in order to add the item and/or the event.
+
+Checking the MFC documentation is suggested.
+
+\subsection{Algorithm}
+
+Most of the functionality has been converted into the C++ API. Thus, the functions are nearly the same with a few additions. Instead of the IplImage object, Mat objects are being used. This
+has the drawback since no OpenCV 2 structure has a ROI field, so a struct Image has been developed which in turn is made of the frame and a ROI.
+
+The \texttt{filefmt2.h/cpp} files contain nearly the same code as \texttt{filefmt.h/c}. The main differences are in the functions that end in 2, which are the OpenCV 2.x versions of the old functions.
+
+\subsubsection{Changes}
+\paragraph{SER file management (\texttt{serfmt}):}
+\begin{enumerate}
+\item \texttt{Serfmt2.cpp/h} were created but are currently unused
+\item When creating the structure, depending on the header values enough memory is allocated to create the \texttt{Mat} from the file data.
+\item A function named \texttt{serFrameRead} was created which reads the file data into the allocated memory. Depending on the size and channels it’s read differently, taking into account how it’s organised in the first place. For more information check the spec page: 
+
+http://www.grischa-hahn.homepage.t-online.de/astro/ser/SER%20Doc%20V3b.pdf
+
+\item The data read by the aforementioned function can be retrieved in pointer format (\texttt{void*}) by another function named \texttt{serQueryFrameData}.
+\end{enumerate}
+
+\paragraph{Wrapper files (\texttt{wrapper})}
+\begin{enumerate}
+\item A \texttt{dtcCapture2} item has been created, where the videocapture has been migrated from the deprecated \texttt{CvCapture} class to the current \texttt{cv::VideoCapture} class. At the time being, it is unused.
+\item The function \texttt{dtcCaptureFromFile2} has been created as a new implementation using the new API.
+\item \texttt{dtcQueryFrame2} has been adapted to the new SER v3 specification. Raw data from the file is read normally, but depending on the header values the OpenCV Mat containing the video frame is created differently. Depending on the byte depth the Mat contains is one or three channels of 16-bit or 8-bit data. If the video has been captured using Bayer filters, a colour conversion will be applied.
+\end{enumerate}
+
+\paragraph{Image manipulation files (\texttt{img2}):}
+
+\begin{enumerate}
+\item Some of the functions which operate with the ROI, as stated above, instead of single \texttt{IplImage} instance we have to use an Image structure which consists in a Mat and Rect instances; differences being trivial.
+\item There’s a cross-correlation function, \texttt{correlateROI}, in which the current frame and the original frame, both being cut with their respective ROI (a bigger cut in the former case), by using OpenCV functions, allows us to get the cross-correlation matrix and the resulting aligned frame. It also returns an accurate value of the displacement of the Centre of Brightness
+\item The histogram function is also very different due to the API changes being heavy in this regard.
+\item There are a couple of functions which draw the location of the Centre of Mass and the location of the impact as a crosshair, as well as a rectangle delimiting the Region of Interest.
+\end{enumerate}
+
+\section{Thorough explanation of the source code}
+
+\subsection{Table of files and purpose}
+
+\begin{table}[H]
+\centering
+\caption{Pairs of source/header files and their purpose}
+\label{my-label}
+\begin{tabular}{|m{0.3\textwidth}|m{0.7\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Filename}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{auxfunc.h} & Auxiliar functions \\ \hline
+\texttt{cmdline} & Command line functions   \\ \hline
+common & Common functions   \\ \hline
+\texttt{datation} & Datation functions (legacy)   \\ \hline
+\texttt{datation2} & Datation functions (additions)   \\ \hline
+\texttt{DeTeCt-MFC} & Main program file  \\ \hline
+\texttt{DeTeCt-MFCDlg} & Dialog/window classes \&amp; functions  \\ \hline
+\texttt{DetectThread} & Impact detection  Windows native thread \\ \hline
+\texttt{dtc} & Impact detection algorithm for CLI (legacy) \\ \hline
+\texttt{dtcas3} & Impact detection algorithm for AS!3  \\ \hline
+\texttt{dtcgui} & Impact detection algorithm for GUI  \\ \hline
+\texttt{filefmt} & File management functions  \\ \hline
+\texttt{fitsfmt} & Fits file management functions  \\ \hline
+\texttt{img} & OpenCV IplImage treatment functions (legacy)  \\ \hline
+\texttt{img2} & OpenCV Mat treatment functions (adaptations)  \\ \hline
+\texttt{max} & Functions for impact detection by max. brightness \\ \hline
+\texttt{resource} & Visual Studio autogenerated file  \\ \hline
+\texttt{serfmt} & SER file management functions  \\ \hline
+\texttt{stdafx} & Visual Studio autogenerated file wrapper. \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{\texttt{auxfunc.h}: auxiliary functions}
+This file only contains only a function:
+\begin{itemize}
+\item \texttt{DBOUT(S)}: returns the introduced string stream as an output string stream
+(\texttt{std::wostringstream}). Used mainly for debugging, the name stands for DeBug
+OUT.
+\end{itemize}
+
+For \texttt{filter}, these are the parameters:
+
+\begin{table}[H]
+\centering
+\caption{\texttt{Filter} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|
+m{0.2\textwidth}|
+m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{|c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{type} & \texttt{integer} & Type of filter: blur, median, Gaussian. functions \\ \hline
+\texttt{param} & \texttt{integer[4]} & Parameters: radius, height, width and sigma   \\ \hline
+\end{tabular}
+\end{table}
+
+And for \texttt{options}:
+
+\begin{center}
+\begin{longtable}{|m{0.25\textwidth}|m{0.25\textwidth}|m{0.5\textwidth}|}
+\hline
+\multicolumn{1}{|m{0.25\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.25\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.5\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endfirsthead
+\multicolumn{3}{m\textwidth}%
+{\textit{Continues from previous page}} \\ \hline
+\multicolumn{1}{|m{0.25\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.25\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.5\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endhead
+\hline \multicolumn{3}{m\textwidth}{\textit{Continues in next page}} \\
+\endfoot
+\endlastfoot
+\texttt{filename} & \multirow{6}{*}{\texttt{char*}} & Input filename \\ \cline{1-1} \cline{3-3}
+\texttt{ofilename}  & & Output filename \\ \cline{1-1} \cline{3-3}
+\texttt{darkfilename} &  & Dark frame filename \\ \cline{1-1} \cline{3-3}
+\texttt{ovfname} &  & Output video filename \\ \cline{1-1} \cline{3-3}
+\texttt{sfname} & & <unknown> filename \\ \cline{1-1} \cline{3-3}
+\texttt{dirname} & & directory name \\ \hline
+\texttt{nSaveframe} & \multirow{3}{*}{\texttt{integer}} & <unknown> filename \\ \cline{1-1} \cline{3-3}
+\texttt{ostype} &  & Source video type \\ \cline{1-1} \cline{3-3}
+\texttt{ovtype} &  & Output video type \\ \hline
+\texttt{timeImpact} & \multirow{2}{*}{\texttt{double}} & Time of impact in seconds \\ \cline{1-1} \cline{3-3}
+\texttt{incrLumImpact} & & Minimum impact strength \\ \hline
+\texttt{incrFrameImpact} & \texttt{integer} & Number of frames for impact \\ \hline
+\texttt{radius} & \texttt{double} & Radius of impact in pixels \\ \hline
+\texttt{nFramesROI} & \multirow{4}{*}{\texttt{unsigned long}} & Number of frames for ROI  \textit{(deprecated)} \\ \cline{1-1} \cline{3-3}
+\texttt{nFramesRef} &  & Number of frames for reference frame  \\ \cline{1-1} \cline{3-3}
+\texttt{wROI} & & ROI width \textit{(deprecated)} \\ \cline{1-1} \cline{3-3}
+\texttt{hROI} & & ROI height \textit{(deprecated)} \\ \hline
+\texttt{bayer} & \texttt{integer} & Debayering code \\ \hline
+\texttt{medSize} & \multirow{6}{*}{\texttt{double}} & Median filter buffer size for ROI calculation \\ \cline{1-1} \cline{3-3}
+\texttt{facSize} & & Size factor for ROI \\ \cline{1-1} \cline{3-3}
+\texttt{secSize} & & Security factor for ROI \\ \cline{1-1} \cline{3-3}
+\texttt{threshold} & & Time of impact in seconds \\ \cline{1-1} \cline{3-3}
+\texttt{learningRate} & & Learning rate \textit{(deprecated)} \\ \cline{1-1} \cline{3-3}
+\texttt{histScale} &  & Histogram scale \\ \hline
+\texttt{wait} & \multirow{17}{*}{\texttt{boolean}} & Time to wait in milliseconds \\ \cline{1-1} \cline{3-3}
+\texttt{thrWithMask} & & Use mask for reference frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewROI} & & View ROI frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewTrk} &  & View tracking frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewDif} & & View original differential frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewRef} &  & View reference frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewMsk} &  & View masked differential frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewThr} & & View thresholded differential frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewSmo} & & View smoothed differential frame frame \\ \cline{1-1} \cline{3-3}
+\texttt{viewRes} & & View resulting differential frame \\ \cline{1-1} \cline{3-3}
+\texttt{verbose} & & Verbose output \textit{(deprecated)} \\ \cline{1-1} \cline{3-3}
+\texttt{debug} & & Debug output \textit{(deprecated)} \\ \cline{1-1} \cline{3-3}
+\texttt{videotest} & & Test input video file \textit{(deprecated)} \\ \cline{1-1} \cline{3-3}
+\texttt{ADUdtconly} & & Use Adudtc algorithm only (max, max-mean images) \\ \cline{1-1} \cline{3-3}
+\texttt{detail} & & Show more frames in output \\ \cline{1-1} \cline{3-3}
+\texttt{allframes} & & Save all intermediate frames \\ \cline{1-1} \cline{3-3}
+\texttt{minframes} &  & Minimum frames to process video \\ \hline
+\texttt{filter} & \texttt{Filter} & Filter defined in the table above \\ \hline
+\texttt{dateonly} & \texttt{integer} & Display date information and stop processing \\ \hline
+\texttt{ignore} & \texttt{integer} & Ignore incorrect frames \\ \hline
+\caption{\texttt{Options} structure definition}
+\label{my-label}
+\end{longtable}
+\end{center}
+
+\subsection{\texttt{Common}: helper functions}
+
+These files define multiple common or helping functions:
+\begin{itemize}
+\item  \texttt{Mid}: copy a substring.
+\item  \texttt{Left}: copy a left substring???
+\item  \texttt{Right}: copy a substring to the right???
+\item  \texttt{Replace\_str}: replace string
+\item  \texttt{inStr}: Check if substring is inside string
+\item  \texttt{strrstr}: check location of string in substring
+\item  \texttt{InRstr}:???
+\item \texttt{Lcase}: convert string to lowercase
+\item \texttt{Ucase}: convert string to uppercase
+\end{itemize}
+
+\subsection{\texttt{Datation}: datation functions}
+
+These files define functions regarding image datation, i.e., obtaining when the video was recorded. Operates with Julian dates, UTC dates, etc. For this, we use the following functions:
+
+\begin{itemize}
+\item  \texttt{dtcGetDatation}: Gets datation from file capture
+\item  \texttt{dtcGetCorrectDatation}: Fixes the datation if computed incorrectly
+\item  \texttt{dtcWriteLog}: writes DeTeCt.log, the contents of the file are explained in a later
+appendix.
+\item  \texttt{dtcGetDatationFromFileInfo}: Gets datation from file system information
+\item  \texttt{dtcGetDatationFromLogFile}: Gets datation from different software log files
+\item  \texttt{gregorian\_calendar\_to\_jd}: Converts dates to Julian day
+\item  \texttt{jd\_to\_date}: Converts Julian days into dates
+\item  \texttt{fprint\_jd}: Prints Julian day
+\item  \texttt{fprint\_jd\_wj}: Prints Julian day and calendar date
+\item \texttt{fprint\_timetype}: Prints type of date, local, universal or unknown
+\item  \texttt{JD\_from\_time\_t}: Obtains Julian day from C++ \texttt{time\_t} instance
+\item \texttt{month\_nb}: Get month from String
+\end{itemize}
+
+\subsection{\texttt{datation2}: extension of \texttt{datation}}
+
+This is an extension of the datation functions. Since in this version we support analysing multiple files at once, writing an unique log containing a line for each video analysed.
+
+We define an struct here, named \texttt{LogInfo}:
+
+\begin{table}[H]
+\centering
+\caption{\texttt{LogInfo} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.25\textwidth}|m{0.25\textwidth}|m{0.5\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline 
+\texttt{filename} & \texttt{char*} & Name of analysed file \\ \hline
+\texttt{start\_time} & \multirow{4}{*}{\texttt{double}} & Start time of the video (calendar date) \\ \cline{1-1} \cline{3-3}
+\texttt{end\_date} & & End time of the video (calendar date)  \\ \cline{1-1} \cline{3-3}
+\texttt{duration} & & Duration of video in seconds   \\ \cline{1-1} \cline{3-3}
+\texttt{fps} & & Frames per second   \\ \hline
+\texttt{timetype} & \texttt{TIME\_TYPE} & Type of time: UT, LT or unknown \\ \hline
+\texttt{comment} & \texttt{char*} & Comment: software info \&amp; functions  \\ \hline
+\texttt{nb\_impact} & \texttt{integer} & Number of impacts found \\ \hline
+\texttt{certainty} & \texttt{double} & Impact confidence \\ \hline
+\end{tabular}
+\end{table}
+
+With this, we can now write a log file with the next functions:
+\begin{itemize}
+\item \texttt{createLogInfo}: creates an instance of LogInfo
+\item \texttt{fprint\_jd\_wj}: prints the julian date converted into a calendar date into the file
+stream i.e., the log file.
+\item \texttt{dtcWriteWholeLog}: legacy function, unused
+\item \texttt{dtcWriteWholeLog2}: writes the information into the log file. It traverses a list of \texttt{LogInfo} items and prints them line by line. The contents will be explained in an appendix.
+\item \texttt{getDateTime}: helper function to print the date and time of the messages both in the \texttt{output.log} file and GUI
+\end{itemize}
+
+\subsection{\texttt{DeTeCt-MFC}: main files}
+
+The main file of the software, this is the starting point from where runs and operates as the user wants. The application is defined there, which is the instance of a class named \texttt{CDeTeCtMFCApp}.
+
+Due to an option to develop some functionalities compatible with AutoStakkert!3 there are two different forms of starting the program
+\begin{enumerate}
+\item The usual way: double clicking the icon and running the software in GUI mode
+normally.
+\item AS!3 compatibility mode: opening a console and typing Should open a new terminal
+where the same algorithm is run (with similar output) but the image coregistration
+data is already known. This feature is not completed yet.
+\begin{center} \texttt{DeTeCt3.1.win32.exe –autostakkert filename}
+\end{center}
+\end{enumerate}
+
+There aren’t any functions except the InitInstance which works in the aforementioned ways. In the first case, components from the next file will be the ones spawned.
+
+
+\subsection{\texttt{DeTeCt-MFCDlg}: window/dialog functionality}
+
+As said before, this file pair is the one which has the whole window or dialog (\texttt{Dlg} stands for it) functionality, the equivalence is:
+
+\begin{enumerate}
+\item Main dialog: \texttt{CDeTeCtMFCDlg} (ID: \texttt{IDD\_DETECTMFC\_DIALOG} )
+\item Preferences Dialog: \texttt{CDeTeCtMFCDlg} (ID: \texttt{IDD\_ABOUTBOX})
+\item About dialog: \texttt{PrefDlg} (ID: \texttt{IDD\_PREFERENCES})
+\item Results / log send dialog: : \texttt{SendEmailDlg} (ID: \texttt{IDD\_SENDLOGDIALOG})
+\end{enumerate}
+
+\subsection{\texttt{DetectThread}: native detection thread}
+
+This class is a bit redundant since the standard C++ libraries already allow for threading but was created in a time where the execution was synchronous and the interface couldn’t be updated because of blocking calls. 
+
+Until recently an standard thread function was called but as Windows has its API in this regard those functions have been favoured.
+
+The documentation requires the user to spawn a thread with \texttt{AfxBeginThread}, which in in our case is defined as
+
+\begin{center}
+\begin{minted}{c}
+AfxBeginThread(impactDetection, (LPVOID) params);
+\end{minted}
+\end{center}
+
+The function requires an special a special signature, which in our case ends up being the next one:
+
+\begin{center}
+\begin{minted}{c}
+UINT __cdecl impactDetection(LPVOID pParam);
+\end{minted}
+\end{center}
+
+\texttt{LPVOID} is an alias for a pointer to \texttt{void} (\texttt{void*}). Since it’s a pointer, we need to created a pointer to an structure, which is aptly named \texttt{ImpactDetectParams}, which is defined as
+
+\begin{table}[H]
+\centering
+\caption{\texttt{ImpactDetectParams} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.3\textwidth}|m{0.25\textwidth}|m{0.45\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline 
+\texttt{file\_list} & \texttt{vector<string>} & List of files to be analysed \\ \hline
+\texttt{opts} &\texttt{Options} & Options for the algorithm \\ \hline
+\texttt{scan\_folder\_path} & \texttt{string} & Topmost folder where the output is going to be stored  \\ \hline
+\end{tabular}
+\end{table}
+
+Initially a \texttt{ImpactDetectParams} instance is created and casted to spawn the thread. In the
+thread function, the \texttt{LPVOID} will be reversed to obtain the original memory structure.
+
+With this the thread will be spawned when the \textit{“Detect impact”} button is clicked and the
+functions in dtcgui.h/cpp will be called.
+
+\subsection{\texttt{Dirent}: third party native windows directory functions}
+
+These functions are windows directory functions made by Toni Ronkko and available at
+
+https://github.com/tronkko/dirent/blob/master/include/dirent.h
+
+\subsection{\texttt{dtc}: legacy detection algorithm functions [unused]}
+
+This file is used as the main function of the older, console based, version of DeTeCt, where the detection algorithm, the part where operations with IplImage type objects are made. The detection itself is run with functions present in max.
+
+\subsection{\texttt{dtcas3}: Autostakkert!3 detection functions}
+
+As stated before, AS!3 support is in a halt so these functions are not totally implemented yet. The function should be the same that it’s called in DetectThread, but with some differences (namely the ROI identification which should be already included in the AS!3 file).
+
+\subsection{\texttt{dtcgui}: Main detection functions}
+
+This is, alongside the \texttt{img2.h}/\texttt{.cpp} files, the core of the software, so to speak. It’s the adaptation of the dtc files from the previous version. The main functions of the file are:
+
+\begin{itemize}
+\item \texttt{read\_files}: with a folder, it obtains a vector of files in a directory tree reading it
+recursively. The supported formats are: \texttt{m4v}, \texttt{avi}, \texttt{ser}, \texttt{wmv}, \texttt{bmp}, \texttt{jpg},
+\texttt{jpeg}, \texttt{jp2}, \texttt{dib}, \texttt{png}, \texttt{p?m}, \texttt{sr}, \texttt{ras}, \texttt{tif}, \texttt{tiff}, \texttt{fit} and \texttt{fits}. These files will be the ones which the algorithm will analyse.
+\item \texttt{Itemcmp}: compares maximum brightness items by their brightness value
+\item \texttt{Framecmp}: compares maximum brightness items by their frame number
+\item \texttt{Detect}: impact detection algorithm explained above.
+\end{itemize}
+
+It also includes a pair of helper functions which show which system is the user is running, for internal purposes, these are:
+\begin{itemize}
+\item \texttt{StreamDeTeCtOSversions}: shows software (both Windows and DeTeCt) version
+which the user is running as a text stream.
+\item \texttt{GetOSversion}: Gets Windows operative system version
+\end{itemize}
+
+\subsection{\texttt{filefmt}: legacy file management functions [unused]}
+
+This file is the one which will operate with the files. This is the old version used by the 2.0 branch of the software with is present for legacy reasons and should be removed.
+
+\subsection{\texttt{filefmt2}: file management functions}
+
+This is the new version of the previous file, the main difference being that it the OpenCV C++ API is used instead of the C one.
+
+In order to operate with the files, an struct named FileCapture has been created, with the next fields:
+
+\begin{center}
+\begin{longtable}{|m{0.25\textwidth}|m{0.25\textwidth}|m{0.5\textwidth}|}
+\hline
+\multicolumn{1}{|m{0.25\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.25\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.5\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endfirsthead
+\multicolumn{3}{m\textwidth}%
+{\textit{Continues from previous page}} \\ \hline
+\multicolumn{1}{|m{0.25\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.25\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.5\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endhead
+\hline \multicolumn{3}{m\textwidth}{\textit{Continues in next page}} \\
+\endfoot
+\endlastfoot
+\texttt{FileType} & \texttt{int} & Type of file \\ \hline
+\texttt{fh} & \texttt{FILE*} & Associated file pointer \\ \hline
+\texttt{frame} & \texttt{int} & Number of frame \\ \hline
+\texttt{Image} & \texttt{Mat} & OpenCV matrix containing image pixel values \\ \hline
+\texttt{Image} & \multirow{2}{*}{\texttt{size\_t}} & Bytes per frame \\ \cline{1-1} \cline{3-3}
+\texttt{BytesPerPixel} & & Bytes per pixel (1 or 2) \\ \hline
+\texttt{ImageWidth} & \multirow{3}{*}{\texttt{int}} & Width of the image \\ \cline{1-1} \cline{3-3}
+\texttt{ImageHeight} & & Height of he image (1 or 2) \\ \cline{1-1} \cline{3-3}
+\texttt{BytesPerPixel} & & Pixel Depth in bits of the image (which will affect the \texttt{BytesPerPixel} value \\ \hline
+\texttt{ColorID} & \texttt{unsigned int} & Colour ID of the image (BRG, RGB, Bayer...) \\ \hline
+\texttt{header\_size} & \multirow{3}{*}{\texttt{size\_t}} & Size of the header data \\ \cline{1-1} \cline{3-3}
+\texttt{FrameCount} & & Number of frames \\ \cline{1-1} \cline{3-3}
+\texttt{ValidFrameCount} & & Number of frames \\ \hline
+\texttt{StartTime\_JD} & \multirow{4}{*}{\texttt{size\_t}} & Start time in Julian day format \\ \cline{1-1} \cline{3-3}
+\texttt{StartTimeUTC\_JD} & & Start UTC time in Julian day format \\ \cline{1-1} \cline{3-3}
+\texttt{EndTime\_JD} & & End time in Julian day format \\ \cline{1-1} \cline{3-3}
+\texttt{EndtTimeUTC\_JD} & & End UTC time in Julian day format \\ \hline
+\texttt{NumberPos} & \multirow{5}{*}{\texttt{int}} & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{LeadingZeros} & & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{FirstFileIdx} & & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{LastValidFileIdx} & & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{LastFileIdx} & & ??? \\ \cline{1-1} \hline
+\texttt{Filename\_rac} & \multirow{5}{*}{\texttt{char*}} & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{Filename\_head} & & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{Filename\_trail} & & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{Filename\_ext} & & ??? \\ \cline{1-1} \cline{3-3}
+\texttt{Filename\_folder} & & ??? \\ \cline{1-1} \hline
+\caption{\texttt{FileCapture} structure definition}
+\label{my-label}
+\end{longtable}
+\end{center}
+
+This structure will be operated by the next functions:
+\begin{itemize}
+\item FileCaptureFromFile: Opens the file and obtains the information, operating differently if the file is a \texttt{.fits} or a different format not supported by OpenCV.
+\item \texttt{fileReinitCaptureRead}: Restarts the file capture
+\item \texttt{fileQueryFrame}: queries a frame, i.e., reads the data into an \texttt{IplImage}.
+\item \texttt{fileQueryFrame2}: same as before but a \texttt{Mat} instead of \texttt{IplImage}.
+\item \texttt{fileGet\_info}: gets information of the file.
+\item \texttt{fileReleaseCapture}: Cleans capture.
+\item \texttt{fileGenerate\_filename}: Generates the filename
+\item \texttt{fileGet\_filename}: Obtains the filename
+\item \texttt{fileGenerate\_number}: Generates the file number based on the leading zeros of the original filename [??]
+\end{itemize}
+
+
+\subsection{\texttt{fitsfmt}: FITS management functions}
+
+This file uses the fits API by the Smithsonian institute, where this file extension gets its support with the next three functions:
+
+\begin{itemize}
+\item \texttt{fitsImageRead}: reads the bytes of the image.
+\item \texttt{fitsGet\_info}: gets file info by reading the header data. For this, it uses the API mentioned before.
+\item \texttt{fitsJD\_date}: obtains the Julian Date taking the header data into account.
+\end{itemize}
+
+\subsection{\texttt{img}: Opencv Matrix operation functions (C API)}
+
+This file is the file where the deprecated \texttt{IplImage} objects are going to be operated. This file is deprecated and most functions have been adapted into the Mat class of the C++ which are
+defined in img2.
+
+\subsection{\texttt{img2}: OpenCV detection functions (C++ API)}
+As said before, this file will be the one which will operate the same way (with some addition) using the C++ API instead of the C one. For some instances where will need the ROI, an \texttt{Image} struct has been defined:
+
+\begin{table}[H]
+\centering
+\caption{\texttt{Image} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|m{0.2\textwidth}|m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{Frame} & \texttt{Mat} & Image frame \\ \hline
+\texttt{roi} & \texttt{Rect} & Region of interest of said frame \\ \hline
+\end{tabular}
+\end{table}
+
+Another struct, unused at the moment, called \texttt{DtcImageVals} is available to find the luminosity values of the frame:
+
+\begin{table}[H]
+\centering
+\caption{\texttt{DtcImageVals} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|m{0.2\textwidth}|m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{lum} & \multirow{3}{*}{\texttt{double}} & Total luminosity value \\ \cline{1-1} \cline{3-3}
+\texttt{minlum} & & Minimum luminosity value \\ \cline{1-1} \cline{3-3}
+\texttt{maxlum} & & Maximum luminosity value \\ \hline
+\end{tabular}
+\end{table}
+
+The number of function in this case is pretty high, but most of them are pretty straightforward:
+
+\begin{itemize}
+\item \texttt{dtcGetROI}: returns the ROI of the frame
+\item \texttt{dtcGetCM}: obtains the centre of mass (centre of brigthness) of the image.
+\item \texttt{dtcGetGrayCM}: obtains the CM for a grayscale image.
+\item \texttt{dtcGetGrayMatCM}: same as dtcGetCM.
+\item \texttt{dtcGetImageROIcCM}: Obtains the ROI by passing the CM.
+\item \texttt{dtcGetGrayImageROIcCM}: Obtains the ROI by passing the CM to a grayscale image
+\item \texttt{dtcGetGrayMat}: there are two versions of this function.
+\begin{itemize}
+\item Obtains the grey mat but doesn’t colour correct the videos which have been captured using Bayer filters [UNUSED]
+\item Obtains the grey mat and colour corrects the videos which have been captured using Bayer filters.
+\end{itemize}
+\item \texttt{dtcReduceMatToROI}: Reduces original frame to a rectangle delimited by the ROI.
+\item \texttt{dtcGetFileROIcCM}: Similar to \texttt{getImageROIcCM}, unused.
+\item \texttt{dtcGetFrameROIcCM}: Similar to \texttt{getImageROIcCM}, unused.
+\item \texttt{dtcMaxRect}: Obtains the bigger rectangle out of two
+\item \texttt{dtcDrawCM}: Draws the centre of mass and the ROI for the tracking frame, i.e., the
+original video frame.
+\item \texttt{dtcDrawImpact}: Draws the impact in the resulting detection image.
+\item \texttt{applyMaskToFrame}: Applies a mask to the grayscale frame reducing the background noise so the CM and ROI calculations are accurate.
+\item \texttt{correlateROI}: there are two versions of this function
+\begin{itemize}
+\item Correlates the original ROI with the full frame [UNUSED]
+\item Correlates the original ROI with a slightly bigger cut of the current ROI, increasing overall speed.
+\end{itemize}
+\item \texttt{dtcRunningAvg}: computes a running average of two Images. Unused since the OpenCV \texttt{accumulateWeighted} function is favoured.
+\item \texttt{dtcWriteVideo}: writes a video with the desired output frames. Not used as of now.
+\item \texttt{dtcLumThreshold\_ToZero2}: Applies a thrshold to zero in the frame and saves it in
+the destination [UNUSED]
+\item \texttt{dtcGetImageLum}: Get image luminosity [UNUSED]
+\item \texttt{dtcGetGrayImageVals}: : Get grayscale image luminosity values [UNUSED]
+\item \texttt{dtcGetImageVals}: : Get image luminosity values [UNUSED]
+\item \texttt{dtcGetHistogramImage}: Show the histogram of the frame in question.
+\item \texttt{dtcShowPhotometry}: Show the photometry data for a given frame.
+\item \texttt{correctBayerFilterImages}: Corrects original images which use bayer filters.
+Currently unused in favour of
+\item \texttt{dtcWriteFrame}: Writes a frame into a video writer.
+\item \texttt{doublecmp}: Compares two double values, returns true if a > b, false if b < a.
+\item \texttt{printtbuf}: Prints frame content into console.
+\item \texttt{isEqual}: checks if two frames are equal. This was used to check
+\end{itemize}
+
+\subsection{\texttt{max}: impact detection helper structures and founctions}
+
+In this file the (old) impact detection algorithm is declared and some structs are defined for that, which are the next ones:
+
+\texttt{Point}, which defines the maximum point of brightness for the differential frame taking into account four parameters:
+
+\begin{table}[H]
+\centering
+\caption{\texttt{Point} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|m{0.2\textwidth}|m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{frame} & \texttt{long} & Number of frame \\ \hline
+\texttt{val} & \texttt{double} & Maximum brighness value for given frame \\ \hline
+\texttt{minlum} & \multirow{2}{*}{\texttt{int}} & x axis coordinate of \texttt{val} \\ \cline{1-1} \cline{3-3}
+\texttt{maxlum} & & y axis coordinate of \texttt{val} \\ \hline
+\end{tabular}
+\end{table}
+
+A \texttt{List}
+
+\begin{table}[H]
+\centering
+\caption{\texttt{List} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|m{0.2\textwidth}|m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{size} & \multirow{2}{*}{\texttt{int}} & Current list size \\ \cline{1-1} \cline{3-3}
+\texttt{maxsize} & & Maximum possible list size \\ \hline
+\texttt{head} & \multirow{2}{*}{\texttt{item*}} & First item \\ \cline{1-1} \cline{3-3}
+\texttt{tail} & & Last item \\ \hline
+\end{tabular}
+\end{table}
+
+Of doubly-linked \texttt{Item}s: 
+
+\begin{table}[H]
+\centering
+\caption{\texttt{Item} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|m{0.2\textwidth}|m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{point} & \texttt{Point*} & The point itself \\ \hline
+\texttt{next} & \multirow{2}{*}{\texttt{Item*}} & Next item \\ \cline{1-1} \cline{3-3}
+\texttt{prev} & & Previous item \\ \hline
+\end{tabular}
+\end{table}
+
+From which will we obtain a \texttt{dtcImpact} structure, where we will get the next data about the detected impact(s)
+
+\begin{table}[H]
+\centering
+\caption{\texttt{dtcImpact} structure definition}
+\label{my-label}
+\begin{tabular}{|m{0.2\textwidth}|m{0.2\textwidth}|m{0.6\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{MaxFrame} & \multirow{3}{*}{\texttt{long}} & Frame with maximum brighness value \\ \cline{1-1} \cline{3-3}
+\texttt{nMinFrame} &  & Frame where the impact starts \\ \cline{1-1} \cline{3-3}
+\texttt{nMaxFrame} &  & Frame where the impact ends \\ \hline
+\end{tabular}
+\end{table}
+
+Most of the functions in this pair of files manipulate these data structures in one way or another, except the (now unused) impact detection:
+
+\begin{itemize}
+\item \texttt{init\_list}: Initiates an empty list list of a given max size.
+\item \texttt{create\_point}: creates a point given the parameters states above.
+\item \texttt{create\_item}: creates an item with a given point
+\item \texttt{delete\_head\_item}: Deletes first item of a list
+\item \texttt{add\_tail\_item}: Adds a item to the end of the list
+\item \texttt{delete\_list}: Deletes a list
+\item \texttt{detect\_impact}: Detect an impact [unused]
+\item \texttt{get\_item\_array\_mean\_value}: Returns mean value of an array of items
+\item \texttt{get\_item\_list\_mean\_value}: Returns mean value of a list
+\item \texttt{init\_dtc\_struct}: Initialices dtcImpact structure
+\item \texttt{print\_list\_item}: Prints a list
+\item \texttt{print\_item\_array}: Prints an item array
+\end{itemize}
+
+\subsection{\texttt{resource.h}: MFC resource file}
+
+This header file is automatically generated by MFC and it shouldn’t be edited. It’s used by the \texttt{.rc} resource file. Some of these definitions are defined in those files and then used in the \texttt{Detect-MFCDlg} files, but they aren’t to be changed.
+
+\subsection{\texttt{serfmt}: SER file management}
+
+The purpose of this file pair lies in the management of the SER files supported by the newest astronomical capture recorders. It’s a distinct file from the ones people are familiarised with and not common for the general users.
+
+Since its structure is so different, and to follow the specification located here http://www.grischa-hahn.homepage.t-online.de/astro/ser/SER\%20Doc\%20V3b.pdf, two structures have been created, \texttt{SerHeader} and \texttt{SerCapture}.
+
+For \texttt{SerHeader}, these are the fields:
+
+\begin{center}
+\begin{longtable}{|m{0.25\textwidth}|m{0.25\textwidth}|m{0.5\textwidth}|}
+\hline
+\multicolumn{1}{|m{0.25\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.25\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.5\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endfirsthead
+\multicolumn{3}{m\textwidth}%
+{\textit{Continues from previous page}} \\ \hline
+\multicolumn{1}{|m{0.25\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.25\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.5\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endhead
+\hline \multicolumn{3}{m\textwidth}{\textit{Continues in next page}} \\
+\endfoot
+\endlastfoot
+\texttt{File\_ID} & \texttt{char[14]} & FileID \\ \hline
+\texttt{LuID} & \multirow{3}{*}{\texttt{unsigned int}} & Lumenera camera series id \\ \cline{1-1} \cline{3-3}
+\texttt{ColorID} & & Colour ID: RGB, BGR, MONO, etc. \\ \cline{1-1} \cline{3-3}
+\texttt{LittleEndian} &  & Bit order of the pixels, big or little endian \\ \hline
+\texttt{ImageWidth} & \multirow{4}{*}{\texttt{size\_t}} & Width of the image \\ \cline{1-1} \cline{3-3}
+\texttt{ImageHeight} & & Height of the image \\ \cline{1-1} \cline{3-3}
+\texttt{PixelDepth} & & Pixel depth of the image (in bits) \\ \cline{1-1} \cline{3-3}
+\texttt{FrameCount} & & Number of frames \\ \hline
+\texttt{Observer} & \multirow{3}{*}{\texttt{char[40]}} &  Information about the observer \\ \cline{1-1} \cline{3-3}
+\texttt{Instrument} &  & Information about the instrument \\ \cline{1-1} \cline{3-3}
+\texttt{Telescope} &  & Information about the telescope \\ \hline
+\texttt{DateTime} & \multirow{2}{*}{\texttt{unsigned char[8]}} & Date and time \\ \cline{1-1} \cline{3-3}
+\texttt{DateTimeUTC} & & Date and UTC time \\ \hline
+\caption{\texttt{SerHeader} structure definition}
+\label{my-label}
+\end{longtable}
+\end{center}
+
+And for \texttt{SerCapture}:
+
+\begin{center}
+\begin{longtable}{|m{0.4\textwidth}|m{0.15\textwidth}|m{0.45\textwidth}|}
+\hline
+\multicolumn{1}{|m{0.4\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.15\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.45\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endfirsthead
+\multicolumn{3}{m\textwidth}%
+{\textit{Continues from previous page}} \\ \hline
+\multicolumn{1}{|m{0.4\textwidth}|}{\textbf{Field}} & \multicolumn{1}{m{0.15\textwidth}|}{\textbf{Type}} & \multicolumn{1}{m{0.45\textwidth}|}{\textbf{Purpose}} \\ \hline
+\endhead
+\hline \multicolumn{3}{m\textwidth}{\textit{Continues in next page}} \\
+\endfoot
+\endlastfoot
+\texttt{fh} & \texttt{FILE*} & Associated file pointer \\ \hline
+\texttt{frame} & \multirow{2}{*}{\texttt{size\_t}} & Frame number \\ \cline{1-1} \cline{3-3}
+\texttt{TimeStamp\_Frame} & & Frame timestamp \\ \hline
+\texttt{Image} & \texttt{IplImage*} & Bytes per frame \\ \hline
+\texttt{ImageBytes} & \multirow{2}{*}{\texttt{size\_t}} & Bytes for each image (frame) \\ \cline{1-1} \cline{3-3}
+\texttt{BytesPerPixel} & & Pixel Depth in bits of the image (which will affect the \texttt{BytesPerPixel} value \\ \hline
+\texttt{TimeStampExists} & int & Check if there are timestamps \\ \hline
+\texttt{FrameCount} & \multirow{2}{*}{\texttt{size\_t}} & Total frame count \\ \cline{1-1} \cline{3-3}
+\texttt{ValidFrameCount} & & Ser file header \\ \hline
+\texttt{StartTime\_JD} & \multirow{4}{*}{\texttt{size\_t}} & Start time in Julian day format \\ \cline{1-1} \cline{3-3}
+\texttt{StartTimeUTC\_JD} & & Start UTC time in Julian day format \\ \cline{1-1} \cline{3-3}
+\texttt{EndTime\_JD} & & End time in Julian day format \\ \cline{1-1} \cline{3-3}
+\texttt{EndtTimeUTC\_JD} & & End UTC time in Julian day format \\ \hline
+\texttt{nChannels} & \multirow{5}{*}{\texttt{int}} & Number of channels (1 or 3) \\ \cline{1-1} \cline{3-3}
+\texttt{mat\_type} & & Type of matrix: 8/16 bit 1/3 channel \\ \cline{1-1} \cline{3-3}
+\texttt{byte\_depth} & & Depth in bytes of the image (depends on \texttt{BytesPerPixel} \\ \cline{1-1} \cline{3-3}
+\texttt{current\_frame} & & Frame read at the time \\ \hline
+\texttt{frame\_data} & \texttt{void*} & Raw frame data \\ \hline
+\texttt{big\_endian} & \multirow{2}{*}{\texttt{boolean}} & Processor endianness, big (\texttt{true}) or little (\texttt{false}) \\ \cline{1-1} \cline{3-3}
+\texttt{data\_proc\_same\_endianness} & & Frame data and the processor have the same endianness \\ \hline
+\caption{\texttt{SerCapture} structure definition}
+\label{my-label}
+\end{longtable}
+\end{center}
+
+Operated by the next functions:
+\begin{itemize}
+\item \texttt{serCaptureFromFile}: starts capture and obtains header data from the SER file.
+\item  \texttt{serReinitCaptureRead}: Reinits the file capture (the program should exit it the
+frame count is too small to find an impact)
+\item  \texttt{serReadTimeStamps}: reads the timestamps of the file
+\item  \texttt{serQueryFrame}: returns the last read frame as an an IplImage (deprecated)
+\item  \texttt{serQueryTimeStamp}: queries timestamp of the current frame.
+\item  \texttt{serReleaseCapture}: releases the data after the SER file has been fully read.
+\item  \texttt{serImageRead}: reads a frame and returns the read bytes (deprecated since it uses
+the SER v2 spec)
+\item  \texttt{serTimeStampRead}: reads the current timestamp
+\item  \texttt{serDateTime\_JD}: transforms the SER date format into Julian day
+\item  \texttt{serPrintStr}: prints SER string for a given parameter
+\item  \texttt{serPrintHeader}: Prints SER header data:
+\item  \texttt{serFrameRead}: reads a frame following SER v3 spec and1 returns the read bytes.
+\item  \texttt{serQueryFrameData}: returns the read frame as a \texttt{void*} pointer to the raw data
+\end{itemize}
+
+\subsection{\texttt{wrapper}: File capture wrapper}
+This file serves as a wrapper for the different files that will be analysed. As stated before, there will be three kinds of files: FITS, SER and the files that can be read with OpenCV.
+
+For that a \texttt{DtcCapture} struct will be defined, with the next parameters
+
+\begin{table}[H]
+\begin{tabular}{|m{0.15\textwidth}|m{0.15\textwidth}|m{0.7\textwidth}|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{Type} & \texttt{char[14]} & FileID \\ \hline
+\texttt{framecount} & \texttt{unsigned int} & Frame where the impact starts \\ \hline
+\texttt{u} & \texttt{union} & Union of the three available capture methods, in order to read the correct file: 
+\begin{tabularx}{\linewidth-\tabcolsep}{|X|X|X|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Field}} & \multicolumn{1}{c|}{\textbf{Type}} & \multicolumn{1}{c|}{\textbf{Purpose}} \\ \hline
+\texttt{capture} & \texttt{cvCapture*} & OpenCV \\  \hline
+\texttt{sercapture} & \texttt{SerCapture*} & SER files \\ \hline
+\texttt{filecapture} & \texttt{FileCapture*} & FITS, etc \\ \hline
+\end{tabularx}
+\\ \hline
+\end{tabular}
+\caption{\texttt{DtcCapture} structure definition}
+\label{my-label}
+\end{table}
+
+To operate with this struct, the next functions have been defined:
+
+\begin{itemize}
+\item \texttt{dtcCaptureFromFile}: Initialises capture method, depending on the type of the file
+a different field of the union will be used.
+\item \texttt{dtcReinitCaptureRead}: after reading information for different purposes, the
+capture will start from the beginning.
+\item \texttt{dtcReleaseCapture}: release the capture object, again depending on the type of file
+to be analysed.
+\item \texttt{dtcQueryFrame}: Queries a frame of the video.
+\item \texttt{dtcGetCaptureProperty}: gets the property of the video, namely the FPS value.
+\end{itemize}
+
+
+\subsection{\texttt{wrapper2}: extension of \texttt{wrapper}}
+
+This is a extension of the wrapper files, which using the aforementioned struct extends the
+functionality with a new function which operates with the new SER v3 spec functionality.
+It was intended to work with the C++ version of \texttt{CvCapture} named \texttt{VideoCapture}, which is
+still defined for future usage. It has two functions:
+
+\begin{itemize}
+\item \texttt{dtcCaptureFromFile2}: Same as dtcCaptureFromFile but intended to work with
+the VideoCapture class.
+\item \texttt{dtcQueryFrame2}: Same as dtcQueryFrame but it operates differently with SER
+files. The returned raw data must be normalised to a 8bit unsigned character matrix
+and then colour corrected (if applicable) to return the original frame. These operations
+will depend on the header data of the SER file.
+\end{itemize}
+
+\backmatter
+%\printglossaries
+%\printbibliography[heading=bibintoc]
+
+\end{document}
